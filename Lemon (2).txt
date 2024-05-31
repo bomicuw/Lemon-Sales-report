@@ -1,0 +1,170 @@
+import mysql.connector
+import pandas as pd
+from mysql.connector import pooling
+
+# Connect to MySQL database
+def connect_to_database():
+    connection = mysql.connector.connect(
+        host="localhost",
+        user="username",
+        password="password",
+        database="little_lemon"
+    )
+    return connection
+
+# Create necessary tables in the database
+def create_tables(connection):
+    cursor = connection.cursor()
+    # Define SQL queries to create tables
+    create_customers_table = """
+    CREATE TABLE IF NOT EXISTS customers (
+        customer_id INT AUTO_INCREMENT PRIMARY KEY,
+        first_name VARCHAR(50) NOT NULL,
+        last_name VARCHAR(50) NOT NULL,
+        email VARCHAR(100) NOT NULL UNIQUE
+    );
+    """
+    create_menu_items_table = """
+    CREATE TABLE IF NOT EXISTS menu_items (
+        item_id INT AUTO_INCREMENT PRIMARY KEY,
+        item_name VARCHAR(100) NOT NULL,
+        price DECIMAL(10, 2) NOT NULL CHECK (price >= 0)
+    );
+    """
+    create_orders_table = """
+    CREATE TABLE IF NOT EXISTS orders (
+        order_id INT AUTO_INCREMENT PRIMARY KEY,
+        customer_id INT NOT NULL,
+        item_id INT NOT NULL,
+        quantity INT NOT NULL CHECK (quantity > 0),
+        total_amount DECIMAL(10, 2),
+        FOREIGN KEY (customer_id) REFERENCES customers(customer_id),
+        FOREIGN KEY (item_id) REFERENCES menu_items(item_id)
+    );
+    """
+    create_bookings_table = """
+    CREATE TABLE IF NOT EXISTS bookings (
+        booking_id INT AUTO_INCREMENT PRIMARY KEY,
+        customer_id INT NOT NULL,
+        table_number INT NOT NULL,
+        booking_date DATE NOT NULL,
+        FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
+    );
+    """
+    # Execute SQL queries to create tables
+    cursor.execute(create_customers_table)
+    cursor.execute(create_menu_items_table)
+    cursor.execute(create_orders_table)
+    cursor.execute(create_bookings_table)
+    connection.commit()
+    cursor.close()
+
+# Implement procedures in Python
+def get_max_quantity(connection):
+    cursor = connection.cursor()
+    cursor.callproc("GetMaxQuantity")
+    result = cursor.stored_results().fetchall()
+    cursor.close()
+    return result
+
+def manage_booking(connection, customer_id, table_number, booking_date):
+    cursor = connection.cursor()
+    cursor.callproc("ManageBooking", [customer_id, table_number, booking_date])
+    result = cursor.stored_results().fetchall()
+    cursor.close()
+    return result
+
+def add_booking(connection, booking_id, customer_id, table_number, booking_date):
+    cursor = connection.cursor()
+    cursor.callproc("AddBooking", [booking_id, customer_id, table_number, booking_date])
+    result = cursor.stored_results().fetchall()
+    cursor.close()
+    return result
+
+def update_booking(connection, table_number, booking_date):
+    cursor = connection.cursor()
+    cursor.callproc("UpdateBooking", [table_number, booking_date])
+    result = cursor.stored_results().fetchall()
+    cursor.close()
+    return result
+
+def cancel_booking(connection, table_number):
+    cursor = connection.cursor()
+    cursor.callproc("CancelBooking", [table_number])
+    result = cursor.stored_results().fetchall()
+    cursor.close()
+    return result
+
+# Populate tables with sample data
+def populate_tables(connection):
+    cursor = connection.cursor()
+    # Insert sample data into the customers table
+    insert_customers = """
+    INSERT INTO customers (first_name, last_name, email) VALUES
+    ('John', 'Doe', 'john@example.com'),
+    ('Jane', 'Smith', 'jane@example.com')
+    ON DUPLICATE KEY UPDATE email=VALUES(email);
+    """
+    # Insert sample data into the menu_items table
+    insert_menu_items = """
+    INSERT INTO menu_items (item_name, price) VALUES
+    ('Lemonade', 2.50),
+    ('Lemon Tart', 4.00)
+    ON DUPLICATE KEY UPDATE price=VALUES(price);
+    """
+    # Execute insert queries
+    cursor.execute(insert_customers)
+    cursor.execute(insert_menu_items)
+    connection.commit()
+    cursor.close()
+
+# Connect to Tableau and analyze data
+def connect_to_tableau():
+    pass
+
+# Export relevant diagrams and screenshots
+def export_diagrams_and_screenshots():
+    pass
+
+# Commit project to GitHub
+def commit_to_github():
+    pass
+
+# Main function to execute the script
+def main():
+    # Connect to MySQL database
+    connection = connect_to_database()
+
+    # Create tables in the database
+    create_tables(connection)
+
+    # Populate tables with sample data
+    populate_tables(connection)
+
+    # Implement tasks for procedures
+    max_quantity = get_max_quantity(connection)
+    print(f"Max Quantity in Order: {max_quantity}")
+
+    booking_result = manage_booking(connection, 1, 99, '2022-12-10')
+    print(f"Manage Booking Result: {booking_result}")
+
+    add_booking_result = add_booking(connection, 99, 99, 99, '2022-12-10')
+    print(f"Add Booking Result: {add_booking_result}")
+
+    update_booking_result = update_booking(connection, 99, '2022-12-10')
+    print(f"Update Booking Result: {update_booking_result}")
+
+    cancel_booking_result = cancel_booking(connection, 99)
+    print(f"Cancel Booking Result: {cancel_booking_result}")
+
+    # Connect to Tableau and analyze data
+    connect_to_tableau()
+
+    # Export relevant diagrams and screenshots
+    export_diagrams_and_screenshots()
+
+    # Commit project to GitHub
+    commit_to_github()
+
+if __name__ == "__main__":
+    main()
